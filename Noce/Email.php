@@ -45,13 +45,60 @@ class Email
         }
         return false;
     }
-
+    
     public function formatName($name)
     {
         $name = ucwords(strtolower(str_replace("-", " ", $name)));
         return str_replace(" ", "-", $name);
     }
+    
+    public function getHeaderValue($name)
+    {
+        $pos = $this->findHeader($name);
+        if ($pos === false) {
+            return null;
+        }
+        $line = $this->getHeader($pos);
+        return $line[1];
+    }
+    
+    public function getHeaderValues($name)
+    {
+        $values = array();
+        $pos = 0;
+        while (true) {
+            $pos = $this->findHeader($name, $pos);
+            if ($pos === false) {
+                break;
+            }
+            $line = $this->getHeader($pos);
+            $values[] = $line[1];
+            ++$pos;
+        }
+        return $values;
+    }
 
+    public function getAddressListAddresses($name)
+    {
+        $addrs = $this->getHeaderValues($name);
+        return array_map(function($addr) {
+            if (is_array($addr)) {
+                return $addr[1];
+            }
+            return $addr;
+        }, $addrs);
+    }
+    
+    public function getFromAddresses()
+    {
+        return $this->getAddressListAddresses("from");
+    }
+    
+    public function getToAddresses()
+    {
+        return $this->getAddressListAddresses("to");
+    }
+    
     public function getReturnPath()
     {
         $pos = $this->findHeader("return-path");
@@ -289,10 +336,17 @@ class Email
 
     public function importAddress($name, $value)
     {
-        $address = trim($value);
-        if (preg_match("/(.*)\s+<(.+)>$/u", $address, $match)) {
-            $address = array($match[1], $match[2]);
+        $value = trim($value);
+        if (preg_match("/(.*)<(.+)>$/u", $value, $match)) {
+            $display_name = trim($match[1]);
+            $address = trim($match[2]);
+            if ($display_name == "") {
+                $value = $address;
+            }
+            else {
+                $value = array($display_name, $address);
+            }
         }
-        $this->addHeader($name, $address);
+        $this->addHeader($name, $value);
     }
 }
