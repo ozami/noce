@@ -22,22 +22,11 @@ class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
     {
     }
     
-    public function getValue($items = array())
+    public function getValue()
     {
         if ($this->_disabled) {
             return array();
         }
-        if ($items) {
-            $values = array();
-            foreach ($items as $i) {
-                $item = $this->getItem($i);
-                if ($item && !$item->getDisabled()) {
-                    $values[$i] = $item->getValue();
-                }
-            }
-            return $values;
-        }
-
         $values = array();
         foreach ($this->getEnabledItems() as $i => $item) {
             $values[$i] = $item->getValue();
