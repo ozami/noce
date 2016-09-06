@@ -52,8 +52,9 @@ class Image
             IMAGETYPE_JPEG2000 => "imagecreatefromjpeg",
             IMAGETYPE_PNG => "imagecreatefrompng",
             IMAGETYPE_BMP => "imagecreatefromwbmp",
-            IMAGETYPE_WBMP => "imagecreatefromwbmp");
-        $loader = $loader[$type];
+            IMAGETYPE_WBMP => "imagecreatefromwbmp"
+        );
+        $loader = @$loader[$type];
         if (!$loader) {
             throw new \Exception("err_unknown_image_type");
         }
@@ -150,6 +151,35 @@ class Image
         $w = $this->getWidth();
         $h = $this->getHeight();
         $ratio = max($width / $w, $height / $h);
-        return $this->scale($ratio);
+        $this->scale($ratio);
+        $w = $this->getWidth();
+        $h = $this->getHeight();
+        $this->crop(
+            floor(($w - $width) / 2),
+            floor(($h - $height) / 2),
+            $width,
+            $height
+        );
+    }
+    
+    public function crop($x, $y, $width, $height)
+    {
+        $dst = imagecreatetruecolor($width, $height);
+        if (!$dst) {
+            throw new \RuntimeException("err_image_crop");
+        }
+        $w = $this->getWidth();
+        $h = $this->getHeight();
+        $r = imagecopy(
+            $dst, $this->_gd,
+            0, 0, $x, $y,
+            $width, $height
+        );
+        if (!$r) {
+            throw new \RuntimeException("err_image_crop");
+        }
+        imagedestroy($this->_gd);
+        $this->_gd = $dst;
+        return $this;
     }
 }
