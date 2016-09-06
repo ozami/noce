@@ -265,7 +265,7 @@ class Html
     public static function jsData($name, $value)
     {
         $js = urlencode(json_encode($value));
-        $js = "var $name = JSON.parse(decodeURIComponent('$js'));";
+        $js = "var $name = JSON.parse(decodeURIComponent('$js'.replace(/[+]/g, ' ')));";
         return self::h()
             ->tag("script")
             ->attrs(array("type" => "text/javascript"))
