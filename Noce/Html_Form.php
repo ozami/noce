@@ -1,13 +1,15 @@
 <?php
 namespace Noce;
 
-class Form_Plugin_Html
+class Html_Form implements \ArrayAccess
 {
+    public $_form;
     public $_error_decorator;
     public $_error_list_decorator;
     
-    public function __construct()
+    public function __construct($form = null)
     {
+        $this->setForm($form);
         $this->_error_decorator = function($error) {
             return $error->tag("li");
         };
@@ -16,21 +18,31 @@ class Form_Plugin_Html
         };
     }
 
-    public function value(Form $form, $itemPath)
+    public function getForm()
     {
-        return Html::h($form->getItem($itemPath)->getValue());
-    }
-    
-    public function number(Form $form, $itemPath)
-    {
-        return Html::h(number_format($form->getItem($itemPath)->getValue()));
+        return $this->_form;
     }
 
-    public function error(Form $form, $item_paths = array())
+    public function setForm($form)
+    {
+        $this->_form = $form;
+    }
+
+    public function value($itemPath)
+    {
+        return Html::h($this->getItem($itemPath)->getValue());
+    }
+    
+    public function number($itemPath)
+    {
+        return Html::h(number_format($this->getItem($itemPath)->getValue()));
+    }
+
+    public function error($item_paths = array())
     {
         $errs = array();
         foreach ((array) $item_paths as $p) {
-            $item = $form->getItem($p);
+            $item = $this->getItem($p);
             if (!$item->isError()) {
                 continue;
             }
@@ -61,10 +73,10 @@ class Form_Plugin_Html
         $this->_error_list_decorator = $decorator;
     }
     
-    public function selected(Form $form, $itemPath, $separator = ", ")
+    public function selected($itemPath, $separator = ", ")
     {
         // $separator can be instance of Html
-        $labels = (array) $form->getItem($itemPath)->getSelected();
+        $labels = (array) $this->getItem($itemPath)->getSelected();
         $h = new Html();
         $h->append(array_shift($labels));
         foreach ($labels as $label) {
@@ -74,61 +86,61 @@ class Form_Plugin_Html
         return $h;
     }
 
-    public function input(Form $form, $itemPath, $type)
+    public function input($itemPath, $type)
     {
         return Html::h()->tag("input")->attrs(array(
             "type" => $type,
             "name" => $this->makeName($itemPath),
-            "value" => $form->getItem($itemPath)->getValue()
+            "value" => $this->getItem($itemPath)->getValue()
         ));
     }
 
-    public function text(Form $form, $itemPath)
+    public function text($itemPath)
     {
-        return $this->input($form, $itemPath, "text");
+        return $this->input($this, $itemPath, "text");
     }
 
-    public function hidden(Form $form, $itemPath)
+    public function hidden($itemPath)
     {
-        return $this->input($form, $itemPath, "hidden");
+        return $this->input($this, $itemPath, "hidden");
     }
 
-    public function password(Form $form, $itemPath)
+    public function password($itemPath)
     {
         return $this->input($itemPath, "password");
     }
 
-    public function textarea(Form $form, $itemPath)
+    public function textarea($itemPath)
     {
-        $value = $form->getItem($itemPath)->getValue();
+        $value = $this->getItem($itemPath)->getValue();
         return Html::h($value)->tag("textarea")->attrs(array(
             "name" => $this->makeName($itemPath)
         ));
     }
 
-    public function checkbox(Form $form, $itemPath, $value, $label = true)
+    public function checkbox($itemPath, $value, $label = true)
     {
-        return $this->checkableInput($form, "checkbox", $itemPath, $value, $label);
+        return $this->checkableInput("checkbox", $itemPath, $value, $label);
     }
 
-    public function checkboxes(Form $form, $itemPath, $label = true)
+    public function checkboxes($itemPath, $label = true)
     {
-        return $this->checkableInputs($form, "checkbox", $itemPath, $label);
+        return $this->checkableInputs("checkbox", $itemPath, $label);
     }
 
-    public function radio(Form $form, $itemPath, $value, $label = true)
+    public function radio($itemPath, $value, $label = true)
     {
-        return $this->checkableInput($form, "radio", $itemPath, $value, $label);
+        return $this->checkableInput("radio", $itemPath, $value, $label);
     }
 
-    public function radios(Form $form, $itemPath, $label = true)
+    public function radios($itemPath, $label = true)
     {
-        return $this->checkableInputs($form, "radio", $itemPath, $label);
+        return $this->checkableInputs("radio", $itemPath, $label);
     }
 
-    public function select(Form $form, $itemPath)
+    public function select($itemPath)
     {
-        $multiple = $form->getItem($itemPath)->getMultiple();
+        $multiple = $this->getItem($itemPath)->getMultiple();
         $attribs = array();
         $attribs["name"] = $this->makeName($itemPath);
         if ($multiple) {
@@ -138,24 +150,24 @@ class Form_Plugin_Html
         return Html::h()
             ->tag("select")
             ->attrs($attribs)
-            ->append($this->options($form, $itemPath));
+            ->append($this->options($itemPath));
     }
 
-    public function options(Form $form, $itemPath)
+    public function options($itemPath)
     {
-        $input = $form->getItem($itemPath);
+        $input = $this->getItem($itemPath);
         return Html::optionTag($input->getOptions(), $input->getValue());
     }
 
-    public function file(Form $form, $itemPath)
+    public function file($itemPath)
     {
-        return $this->input($form, $itemPath, "file");
+        return $this->input($itemPath, "file");
     }
 
-    public function date(Form $form, $itemPath, $format = "Y/n/j")
+    public function date($itemPath, $format = "Y/n/j")
     {
         $html = $this->input($itemPath, "text");
-        $value = $form->getItem($itemPath)->getValue();
+        $value = $this->getItem($itemPath)->getValue();
         if ((string) (int) $value == (string) $value && $value >= 0) {
             $html->attr("value", date($format, (int) $value));
         }
@@ -172,18 +184,18 @@ class Form_Plugin_Html
         return $name;
     }
 
-    public function checkableInputs(Form $form, $type, $itemPath, $label = true)
+    public function checkableInputs($type, $itemPath, $label = true)
     {
         $html = new Html();
-        foreach ($form->getItem($itemPath)->getOptions() as $value => $_) {
-            $html->append($this->$type($form, $itemPath, $value, $label));
+        foreach ($this->getItem($itemPath)->getOptions() as $value => $_) {
+            $html->append($this->$type($itemPath, $value, $label));
         }
         return $html;
     }
 
-    protected function checkableInput(Form $form, $type, $itemPath, $value, $label = true)
+    protected function checkableInput($type, $itemPath, $value, $label = true)
     {
-        $item = $form->getItem($itemPath);
+        $item = $this->getItem($itemPath);
         // name
         $name = $this->makeName($itemPath);
         if ($item->getMultiple()) {

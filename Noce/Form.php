@@ -6,7 +6,6 @@ class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
     public $_items = array();
     public $_current = 0;
     public $_disabled = false;
-    public $_plugins = array();
     
     public function __construct($value = array())
     {
@@ -274,23 +273,6 @@ class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
             }
         }
     }
-    
-    public function addPlugin($plugin)
-    {
-        $this->_plugins[] = $plugin;
-    }
-    
-    public function __call($name, $args)
-    {
-        array_unshift($args, $this);
-        foreach ($this->_plugins as $plugin) {
-            if (is_callable(array($plugin, $name))) {
-                return call_user_func_array(array($plugin, $name), $args);
-            }
-        }
-        throw new \Exception("Undefined method '$name' called.");
-    }
-    
     
     public function __get($name)
     {
