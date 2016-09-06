@@ -264,14 +264,24 @@ class Db
 
     public static function quoteName($name)
     {
-        if (preg_match("/[^A-Za-z0-9_.]/", $name)) {
+        if (preg_match("/[^A-Za-z0-9_.*]/", $name)) {
             throw new \Exception("err_db_invalid_name");
         }
         $quote = '"';
         if (self::getDriver() == "mysql") {
             $quote = "`";
         }
-        return $quote . join("$quote.$quote", explode(".", $name)) . $quote;
+        $parts = explode(".", $name);
+        $parts = array_map(function($i) use ($quote) {
+            if ($i == "*") {
+                return $i;
+            }
+            if (strpos($i, "*") !== false) {
+                throw new \Exception("err_db_invalid_name");
+            }
+            return "$quote$i$quote";
+        }, $parts);
+        return join(".", $parts);
     }
     
     public static function getTableInfo($table)
