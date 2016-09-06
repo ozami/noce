@@ -1,7 +1,7 @@
 <?php
 namespace Noce;
 
-class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
+class Form implements \ArrayAccess, \Iterator, \Countable
 {
     public $_items = array();
     public $_current = 0;
@@ -16,7 +16,7 @@ class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
     /**
      * Create items and add them to the form
      *
-     * called by __construct() and unserialize()
+     * called by __construct()
      */
     public function init()
     {
@@ -245,24 +245,6 @@ class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
         $this->_items = $items;
     }
     
-    public function dump()
-    {
-        $data = array();
-        foreach ($this->_items as $name => $item) {
-            $data[$name] = $item->dump();
-        }
-        return $data;
-    }
-    
-    public function restore($data)
-    {
-        foreach ($this->_items as $name => $item) {
-            if (isset($data[$name])) {
-                $item->restore($data[$name]);
-            }
-        }
-    }
-    
     public function __get($name)
     {
         $getter = "get" . ucfirst($name);
@@ -349,20 +331,5 @@ class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
     public function count()
     {
         return count($this->_items);
-    }
-
-    //
-    // Serializable interface
-    //
-
-    public function serialize()
-    {
-        return serialize($this->dump());
-    }
-
-    public function unserialize($serialized)
-    {
-        $this->init();
-        $this->restore(unserialize($serialized));
     }
 }
