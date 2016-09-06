@@ -1,7 +1,7 @@
 <?php
 namespace Noce;
 
-class Html_Form implements \ArrayAccess
+class Html_Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
 {
     public $_form;
     public $_error_decorator;
@@ -28,6 +28,11 @@ class Html_Form implements \ArrayAccess
         $this->_form = $form;
     }
 
+    public function getItem($itemPath)
+    {
+        return $this->_form->getItem($itemPath);
+    }
+
     public function value($itemPath)
     {
         return Html::h($this->getItem($itemPath)->getValue());
@@ -49,7 +54,7 @@ class Html_Form implements \ArrayAccess
             $errs[] = $item->getErrorString();
         }
         if (!$errs) {
-            return "";
+            return Html::h();
         }
         $errs = array_unique($errs);
         // decorate
@@ -97,12 +102,12 @@ class Html_Form implements \ArrayAccess
 
     public function text($itemPath)
     {
-        return $this->input($this, $itemPath, "text");
+        return $this->input($itemPath, "text");
     }
 
     public function hidden($itemPath)
     {
-        return $this->input($this, $itemPath, "hidden");
+        return $this->input($itemPath, "hidden");
     }
 
     public function password($itemPath)
@@ -213,5 +218,86 @@ class Html_Form implements \ArrayAccess
             $html = Html::h($html)->tag("label");
         }
         return $html;
+    }
+    
+    public function __call($name, $args)
+    {
+        return call_user_func_array(array($this->_form, $name), $args);
+    }
+    
+    // 
+    // ArrayAccess interface
+    //
+
+    public function offsetExists($offset)
+    {
+        return $this->_form->offsetExists($offset);
+    }
+
+    public function offsetGet($offset)
+    {
+        return $this->_form->offsetGet($offset);
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        return $this->_form->offsetSet($offset, $value);
+    }
+
+    public function offsetUnset($offset)
+    {
+        return $this->_form->offsetUnset($offset);
+    }
+
+    //
+    // Iterator interface
+    //
+
+    public function current()
+    {
+        return $this->_form->current();
+    }
+
+    public function key()
+    {
+        return $this->_form->key();
+    }
+
+    public function next()
+    {
+        return $this->_form->next();
+    }
+
+    public function rewind()
+    {
+        return $this->_form->rewind();
+    }
+
+    public function valid()
+    {
+        return $this->_form->valid();
+    }
+
+    //
+    // Countable interface
+    //
+
+    public function count()
+    {
+        return $this->_form->count();
+    }
+
+    //
+    // Serializable interface
+    //
+
+    public function serialize()
+    {
+        return $this->_form->serialize();
+    }
+
+    public function unserialize($serialized)
+    {
+        return $this->_form->unserialize($serialized);
     }
 }
