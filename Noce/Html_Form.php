@@ -4,18 +4,10 @@ namespace Noce;
 class Html_Form implements \ArrayAccess, \Iterator, \Countable
 {
     public $_form;
-    public $_error_decorator;
-    public $_error_list_decorator;
     
     public function __construct($form = null)
     {
         $this->setForm($form);
-        $this->_error_decorator = function($error) {
-            return $error->tag("li");
-        };
-        $this->_error_list_decorator = function($errors) {
-            return Html::h()->tag("ul")->append($errors);
-        };
     }
 
     public function getForm()
@@ -60,22 +52,20 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable
         // decorate
         $html = Html::h();
         foreach ($errs as $e) {
-            $html->append(
-                call_user_func($this->_error_decorator, Html::h($e))
-            );
+            $html->append($this->decorateError(Html::h($e)));
         }
-        $html = call_user_func($this->_error_list_decorator, $html);
+        $html = $this->decorateErrorList($html);
         return $html;
     }
     
-    public function setErrorDecorator($decorator)
+    public function decorateError($error)
     {
-        $this->_error_decorator = $decorator;
+        return $error->tag("li");
     }
     
-    public function setErrorListDecorator($decorator)
+    public function decorateErrorList($errors)
     {
-        $this->_error_list_decorator = $decorator;
+        return Html::h()->tag("ul")->append($errors);
     }
     
     public function selected($itemPath, $separator = ", ")
