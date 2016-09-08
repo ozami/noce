@@ -1,7 +1,7 @@
 <?php
 namespace Noce;
 
-class Html_Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
+class Html_Form implements \ArrayAccess, \Iterator, \Countable
 {
     public $_form;
     public $_error_decorator;
@@ -285,19 +285,5 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
     public function count()
     {
         return $this->_form->count();
-    }
-
-    //
-    // Serializable interface
-    //
-
-    public function serialize()
-    {
-        return $this->_form->serialize();
-    }
-
-    public function unserialize($serialized)
-    {
-        return $this->_form->unserialize($serialized);
     }
 }
