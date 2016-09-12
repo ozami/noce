@@ -81,13 +81,16 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable
         return $h;
     }
 
-    public function input($itemPath, $type)
+    public function input($itemPath, $type, $name = null, $value = null)
     {
-        return Html::h()->tag("input")->attrs(array(
-            "type" => $type,
-            "name" => $this->makeName($itemPath),
-            "value" => $this->getItem($itemPath)->getValue()
-        ));
+        $input = $this->getItem($itemPath);
+        $h = Html::h()->tag("input")->attr("type", $type);
+        $h->attr("name", isset($name) ? $name : $this->makeName($itemPath));
+        $h->attr("value", isset($value) ? $value : $input->getValue());
+        if (isset($input->html)) {
+            $h->attrs((array)$input->html);
+        }
+        return $h;
     }
 
     public function text($itemPath)
@@ -107,10 +110,15 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable
 
     public function textarea($itemPath)
     {
-        $value = $this->getItem($itemPath)->getValue();
-        return Html::h($value)->tag("textarea")->attrs(array(
+        $input = $this->getItem($itemPath);
+        $value = $input->getValue();
+        $h = Html::h($value)->tag("textarea")->attrs(array(
             "name" => $this->makeName($itemPath)
         ));
+        if (isset($input->html)) {
+            $h->attrs((array)$input->html);
+        }
+        return $h;
     }
 
     public function checkbox($itemPath, $value, $label = true)
@@ -135,17 +143,22 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable
 
     public function select($itemPath)
     {
-        $multiple = $this->getItem($itemPath)->getMultiple();
+        $input = $this->getItem($itemPath);
+        $multiple = $input->getMultiple();
         $attribs = array();
         $attribs["name"] = $this->makeName($itemPath);
         if ($multiple) {
             $attribs["multiple"] = "multiple";
             $attribs["name"] .= "[]";
         }
-        return Html::h()
+        $h = Html::h()
             ->tag("select")
             ->attrs($attribs)
             ->append($this->options($itemPath));
+        if (isset($input->html)) {
+            $h->attrs((array)$input->html);
+        }
+        return $h;
     }
 
     public function options($itemPath)
@@ -181,11 +194,11 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable
 
     public function checkableInputs($type, $itemPath, $label = true)
     {
-        $html = new Html();
+        $inputs = array();
         foreach ($this->getItem($itemPath)->getOptions() as $value => $_) {
-            $html->append($this->$type($itemPath, $value, $label));
+            $inputs[] = $this->$type($itemPath, $value, $label);
         }
-        return $html;
+        return $inputs;
     }
 
     protected function checkableInput($type, $itemPath, $value, $label = true)
@@ -196,7 +209,7 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable
         if ($item->getMultiple()) {
             $name .= "[]";
         }
-        $html = Html::h()->tag("input")->attrs(compact("type", "name", "value"));
+        $html = $this->input($itemPath, $type, $name, $value);
         // checked
         if (in_array("$value", (array) $item->getValue())) {
             $html->attr("checked", "checked");
@@ -205,7 +218,6 @@ class Html_Form implements \ArrayAccess, \Iterator, \Countable
         if ($label) {
             $html = Html::h($html);
             $html->append($item->getOptionsLabel($value));
-            $html = Html::h($html)->tag("label");
         }
         return $html;
     }
