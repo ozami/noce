@@ -37,9 +37,7 @@ class Form implements \ArrayAccess, \Iterator, \Countable
     public function setValue($values)
     {
         foreach ($this->_items as $i => $item) {
-            if (isset($values[$i])) {
-                $item->setValue($values[$i]);
-            }
+            $item->setValue(@$values[$i]);
         }
     }
 
