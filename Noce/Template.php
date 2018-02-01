@@ -56,11 +56,11 @@ class Template
     
     public static function filterPrintf($src)
     {
-        return preg_replace("/<[?]%(.*?)[?]>/us", "<?= sprintf($1) ?>", $src);
+        return preg_replace("/<[?]%(.*?)[?]>/s", "<?= sprintf($1) ?>", $src);
     }
     
     public static function filterEcho($src)
     {
-        return preg_replace("/(<[?]=.*?[?]>)(\r\n|\r|\n)?/us", "$1$2$2", $src);
+        return preg_replace("/(<[?]=.*?[?]>)(\r\n|\r|\n)?/s", "$1$2$2", $src);
     }
 }
