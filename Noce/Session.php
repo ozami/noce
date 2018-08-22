@@ -13,7 +13,7 @@ class Session
             return false;
         }
         self::checkConfig();
-        if (!session_start()) {
+        if (!@session_start()) {
             // @codeCoverageIgnoreStart
             throw new \RuntimeException("err_session_start");
             // @codeCoverageIgnoreEnd
