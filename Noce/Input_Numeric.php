@@ -10,7 +10,7 @@ class Input_Numeric extends Input
     
     public function filter($value)
     {
-        $value = mb_convert_kana($value, "as", "UTF-8");
+        $value = mb_convert_kana($value, "as");
         $value = preg_replace("/[[:space:]]/u", "", $value);
         return $value;
     }

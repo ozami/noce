@@ -1,11 +1,12 @@
 <?php
 namespace Noce;
 
-class Form implements \ArrayAccess, \Iterator, \Countable
+class Form implements \ArrayAccess, \Iterator, \Countable, \Serializable
 {
     public $_items = array();
     public $_current = 0;
     public $_disabled = false;
+    public $_plugins = array();
     
     public function __construct($value = array())
     {
@@ -16,17 +17,28 @@ class Form implements \ArrayAccess, \Iterator, \Countable
     /**
      * Create items and add them to the form
      *
-     * called by __construct()
+     * called by __construct() and unserialize()
      */
     public function init()
     {
     }
     
-    public function getValue()
+    public function getValue($items = array())
     {
         if ($this->_disabled) {
             return array();
         }
+        if ($items) {
+            $values = array();
+            foreach ($items as $i) {
+                $item = $this->getItem($i);
+                if ($item && !$item->getDisabled()) {
+                    $values[$i] = $item->getValue();
+                }
+            }
+            return $values;
+        }
+
         $values = array();
         foreach ($this->getEnabledItems() as $i => $item) {
             $values[$i] = $item->getValue();
@@ -37,7 +49,9 @@ class Form implements \ArrayAccess, \Iterator, \Countable
     public function setValue($values)
     {
         foreach ($this->_items as $i => $item) {
-            $item->setValue(@$values[$i]);
+            if (isset($values[$i])) {
+                $item->setValue($values[$i]);
+            }
         }
     }
 
@@ -243,6 +257,41 @@ class Form implements \ArrayAccess, \Iterator, \Countable
         $this->_items = $items;
     }
     
+    public function dump()
+    {
+        $data = array();
+        foreach ($this->_items as $name => $item) {
+            $data[$name] = $item->dump();
+        }
+        return $data;
+    }
+    
+    public function restore($data)
+    {
+        foreach ($this->_items as $name => $item) {
+            if (isset($data[$name])) {
+                $item->restore($data[$name]);
+            }
+        }
+    }
+    
+    public function addPlugin($plugin)
+    {
+        $this->_plugins[] = $plugin;
+    }
+    
+    public function __call($name, $args)
+    {
+        array_unshift($args, $this);
+        foreach ($this->_plugins as $plugin) {
+            if (is_callable(array($plugin, $name))) {
+                return call_user_func_array(array($plugin, $name), $args);
+            }
+        }
+        throw new \Exception("Undefined method '$name' called.");
+    }
+    
+    
     public function __get($name)
     {
         $getter = "get" . ucfirst($name);
@@ -329,5 +378,20 @@ class Form implements \ArrayAccess, \Iterator, \Countable
     public function count()
     {
         return count($this->_items);
+    }
+
+    //
+    // Serializable interface
+    //
+
+    public function serialize()
+    {
+        return serialize($this->dump());
+    }
+
+    public function unserialize($serialized)
+    {
+        $this->init();
+        $this->restore(unserialize($serialized));
     }
 }

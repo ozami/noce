@@ -147,8 +147,8 @@ class Db_Table
 
     public function makeInsertQuery($data)
     {
-        $data = $this->prepareInsert($data);
         $data = $this->prepareInsertOrUpdate($data);
+        $data = $this->prepareInsert($data);
         $data = ArrayX::pick($data, $this->getCols());
         // 空の主キーを削除
         if ($this->isEmptyPk(@$data[$this->getPk()])) {
@@ -220,8 +220,8 @@ class Db_Table
 
     public function makeUpdateQuery($data, $where = self::UPDATE_BY_PK)
     {
-        $data = $this->prepareUpdate($data);
         $data = $this->prepareInsertOrUpdate($data);
+        $data = $this->prepareUpdate($data);
         $data = ArrayX::pick($data, $this->getCols());
         $id = @$data[$this->getPk()];
         unset($data[$this->getPk()]);

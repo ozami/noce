@@ -326,13 +326,4 @@ class Input
             $this->$name = $value;
         }
     }
-    
-    public function __isset($name)
-    {
-        $getter = "get" . ucfirst($name);
-        if (!method_exists($this, $getter)) {
-            return false;
-        }
-        return $this->$getter() !== null;
-    }
 }

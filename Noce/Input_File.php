@@ -49,7 +49,7 @@ class Input_File extends Input
         }
         if (!($value instanceof UploadedFile)) {
             parent::setValue("");
-            throw new \RuntimeException("err_not_an_uploaded");
+            throw new RuntimeException("err_not_an_uploaded");
         }
         $this->_uploadError = $value->error;
         if ($this->_uploadError != UPLOAD_ERR_OK) {

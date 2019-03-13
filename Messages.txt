@@ -1,0 +1,5 @@
+Messages
+
+Smtp
+* smtp_permanent_error
+* smtp_temporal_error

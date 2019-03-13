@@ -26,10 +26,10 @@ class Input_String extends Input
     {
         $value = (string) $value;
         if ($this->mb != "") {
-            $value = mb_convert_kana($value, $this->mb, "UTF-8");
+            $value = mb_convert_kana($value, $this->mb);
         }
         if ($this->case != "") {
-            $value = mb_convert_case($value, $this->case, "UTF-8");
+            $value = mb_convert_case($value, $this->case);
         }
         if ($this->multiline) {
             if ($this->eol !== false) {
@@ -60,7 +60,7 @@ class Input_String extends Input
         if ($this->utf8Only && !preg_match("//u", $value)) {
             return "err_not_utf8";
         }
-        $length = mb_strlen($value, "UTF-8");
+        $length = mb_strlen($value);
         if ($length < $this->minLength) {
             return "err_too_short";
         }

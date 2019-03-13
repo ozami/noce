@@ -17,28 +17,15 @@ class Email
 
     public function setHeader($pos, $name, $value)
     {
-        $this->validateHeader($name, $value);
         $name = $this->formatName($name);
         $this->_fields[$pos] = array($name, $value);
     }
 
     public function addHeader($name, $value)
     {
-        $this->validateHeader($name, $value);
         $name = $this->formatName($name);
         $this->_fields[] = array($name, $value);
         return count($this->_fields) - 1;
-    }
-
-    public function validateHeader($name, $value)
-    {
-        $joined = $name . join("", (array)$value);
-        if (!preg_match("//u", $joined)) {
-            throw new \RuntimeException("Non-UTF-8 character in mail header");
-        }
-        if (preg_match("/[\r\n]/u", $joined)) {
-            throw new \RuntimeException("CR/LF in mail header");
-        }
     }
 
     public function removeHeader($pos)
@@ -58,60 +45,13 @@ class Email
         }
         return false;
     }
-    
+
     public function formatName($name)
     {
         $name = ucwords(strtolower(str_replace("-", " ", $name)));
         return str_replace(" ", "-", $name);
     }
-    
-    public function getHeaderValue($name)
-    {
-        $pos = $this->findHeader($name);
-        if ($pos === false) {
-            return null;
-        }
-        $line = $this->getHeader($pos);
-        return $line[1];
-    }
-    
-    public function getHeaderValues($name)
-    {
-        $values = array();
-        $pos = 0;
-        while (true) {
-            $pos = $this->findHeader($name, $pos);
-            if ($pos === false) {
-                break;
-            }
-            $line = $this->getHeader($pos);
-            $values[] = $line[1];
-            ++$pos;
-        }
-        return $values;
-    }
 
-    public function getAddressListAddresses($name)
-    {
-        $addrs = $this->getHeaderValues($name);
-        return array_map(function($addr) {
-            if (is_array($addr)) {
-                return $addr[1];
-            }
-            return $addr;
-        }, $addrs);
-    }
-    
-    public function getFromAddresses()
-    {
-        return $this->getAddressListAddresses("from");
-    }
-    
-    public function getToAddresses()
-    {
-        return $this->getAddressListAddresses("to");
-    }
-    
     public function getReturnPath()
     {
         $pos = $this->findHeader("return-path");
@@ -128,15 +68,13 @@ class Email
 
     public function setBody($body)
     {
-        if (!preg_match("//u", $body)) {
-            throw new \RuntimeException("Non-UTF-8 character in mail body");
-        }
         $this->_body = $body;
     }
 
     public function string()
     {
         $body = preg_replace("/(\r\n|\r|\n)/u", "\r\n", $this->_body);
+        $body = mb_convert_encoding($this->_body, "UTF-8");
         $body = base64_encode($body);
         $body = chunk_split($body);
         if (!$this->findHeader("date")) {
@@ -351,17 +289,10 @@ class Email
 
     public function importAddress($name, $value)
     {
-        $value = trim($value);
-        if (preg_match("/(.*)<([^\\s]+?)>$/u", $value, $match)) {
-            $display_name = trim($match[1]);
-            $address = trim($match[2]);
-            if ($display_name == "") {
-                $value = $address;
-            }
-            else {
-                $value = array($display_name, $address);
-            }
+        $address = trim($value);
+        if (preg_match("/(.*)\s+<(.+)>$/u", $address, $match)) {
+            $address = array($match[1], $match[2]);
         }
-        $this->addHeader($name, $value);
+        $this->addHeader($name, $address);
     }
 }

@@ -52,9 +52,8 @@ class Image
             IMAGETYPE_JPEG2000 => "imagecreatefromjpeg",
             IMAGETYPE_PNG => "imagecreatefrompng",
             IMAGETYPE_BMP => "imagecreatefromwbmp",
-            IMAGETYPE_WBMP => "imagecreatefromwbmp"
-        );
-        $loader = @$loader[$type];
+            IMAGETYPE_WBMP => "imagecreatefromwbmp");
+        $loader = $loader[$type];
         if (!$loader) {
             throw new \Exception("err_unknown_image_type");
         }

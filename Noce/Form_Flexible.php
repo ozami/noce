@@ -22,46 +22,54 @@ abstract class Form_Flexible extends Form
         $this->setMax($args["max"]);
         $this->setSpare($args["spare"]);
         $this->setRemoveEmpty($args["removeEmpty"]);
+        $this->adjust();
     }
 
     public function setMin($min)
     {
         $this->_min = (int) $min;
-        $this->adjust();
     }
 
     public function setMax($max)
     {
         $this->_max = (int) $max;
-        $this->adjust();
     }
 
     public function setSpare($spare)
     {
         $this->_spare = (int) $spare;
-        $this->adjust();
     }
 
     public function setRemoveEmpty($removeEmpty)
     {
         $this->_removeEmpty = (bool) $removeEmpty;
-        $this->adjust();
     }
 
     public function getValue()
     {
-        $this->adjust(); // needed for removing empty values
-        return parent::getValue();
+        $values = array();
+        foreach ($this->getItems() as $item) {
+            if ($this->_removeEmpty && $item->isEmpty()) {
+                continue;
+            }
+            $values[] = $item->getValue();
+        }
+        return $values;
     }
 
     public function setValue($values)
     {
-        $this->adjust(count($values));
-        parent::setValue($values);
-        $this->adjust();
+        $values = array_slice($values, 0, $this->_max); // Re-indexed
+        $items = array();
+        foreach ($values as $i => $v) {
+            $item = $this->createItem($i);
+            $item->setValue($v);
+            $items[$i] = $item;
+        }
+        $this->setItems($items); // internally calls adjust()
     }
 
-    public function setItem($name, $item)
+    public function setItem($name, Input $item)
     {
         parent::setItem($name, $item);
         $this->adjust();
@@ -79,7 +87,7 @@ abstract class Form_Flexible extends Form
         $this->adjust();
     }
 
-    public function adjust($min_size = 0)
+    public function adjust()
     {
         $items = $this->getItems();
         // Remove empty
@@ -93,7 +101,7 @@ abstract class Form_Flexible extends Form
         // Re-index
         $items = array_values($items);
         // Reserve spare slots
-        $size = max($this->_min, $min_size, count($items) + $this->_spare);
+        $size = max($this->_min, count($items) + $this->_spare);
         $size = min($this->_max, $size);
         for ($i = count($items); $i < $size; ++$i) {
             $items[] = $this->createItem($i);
